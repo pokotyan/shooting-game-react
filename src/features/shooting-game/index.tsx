@@ -18,8 +18,25 @@ export function ShootingGame() {
         id="main_canvas"
         ref={canvas}
       ></canvas>
-      <div onClick={() => dispatch(actions.initialize(canvas.current!))}>
+      <button
+        style={{
+          display: "block",
+          margin: "auto",
+        }}
+        onClick={() => dispatch(actions.initialize(canvas.current!))}
+      >
         start
+      </button>
+      <div
+        style={{
+          color: "#f0f0f0",
+        }}
+      >
+        十字キー: 移動
+        <br />
+        Z: ショット
+        <br />
+        Enter: リトライ
       </div>
     </div>
   );

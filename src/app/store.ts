@@ -7,7 +7,6 @@ import counterReducer from "../features/counter/slice";
 import gameReducer from "../features/shooting-game/slice";
 import createSagaMiddleware from "redux-saga";
 import { rootSaga } from "./saga";
-import logger from "redux-logger";
 
 export type RootState = ReturnType<typeof rootReducer>;
 
@@ -15,7 +14,6 @@ const sagaMiddleware = createSagaMiddleware();
 const middleware = [
   ...getDefaultMiddleware({ thunk: false, serializableCheck: false }),
   sagaMiddleware,
-  logger,
 ];
 
 export const rootReducer = combineReducers({
