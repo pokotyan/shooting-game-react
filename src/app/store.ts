@@ -3,7 +3,6 @@ import {
   combineReducers,
   getDefaultMiddleware,
 } from "@reduxjs/toolkit";
-import counterReducer from "../features/counter/slice";
 import gameReducer from "../features/shooting-game/slice";
 import createSagaMiddleware from "redux-saga";
 import { rootSaga } from "./saga";
@@ -17,7 +16,6 @@ const middleware = [
 ];
 
 export const rootReducer = combineReducers({
-  counter: counterReducer,
   game: gameReducer,
 });
 
