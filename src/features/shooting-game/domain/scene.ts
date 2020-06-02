@@ -2,6 +2,10 @@
  * シーンを管理するためのクラス
  */
 export class SceneManager {
+  scene: { [k: string]: () => {} };
+  activeScene: (activeTime: number) => {};
+  startTime: number;
+  frame: number;
   /**
    * @constructor
    */
@@ -15,17 +19,17 @@ export class SceneManager {
      * 現在アクティブなシーン
      * @type {function}
      */
-    this.activeScene = null;
+    this.activeScene = null as any;
     /**
      * 現在のシーンがアクティブになった時刻のタイムスタンプ
      * @type {number}
      */
-    this.startTime = null;
+    this.startTime = null as any;
     /**
      * 現在のシーンがアクティブになってからのシーンの実行回数（カウンタ）
      * @type {number}
      */
-    this.frame = null;
+    this.frame = null as any;
   }
 
   /**
@@ -33,7 +37,7 @@ export class SceneManager {
    * @param {string} name - シーンの名前
    * @param {function} updateFunction - シーン中の処理
    */
-  add(name, updateFunction) {
+  add(name: string, updateFunction: () => {}) {
     this.scene[name] = updateFunction;
   }
 
@@ -41,7 +45,7 @@ export class SceneManager {
    * アクティブなシーンを設定する
    * @param {string} name - アクティブにするシーンの名前
    */
-  use(name) {
+  use(name: string) {
     // 指定されたシーンが存在するか確認する
     if (this.scene.hasOwnProperty(name) !== true) {
       // 存在しなかった場合はなにもせず終了する

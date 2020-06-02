@@ -2,11 +2,13 @@
  * Canvas2D API をラップしたユーティリティクラス
  */
 export class Canvas2DUtility {
+  canvasElement: HTMLCanvasElement;
+  context2d: CanvasRenderingContext2D;
   // /**
   //  * @constructor
   //  * @param {HTMLCanvasElement} canvas - 対象となる canvas element
   //  */
-  constructor(canvas) {
+  constructor(canvas: HTMLCanvasElement) {
     /**
      * @type {HTMLCanvasElement}
      */
@@ -14,7 +16,7 @@ export class Canvas2DUtility {
     /**
      * @type {CanvasRenderingContext2D}
      */
-    this.context2d = canvas.getContext("2d");
+    this.context2d = canvas.getContext("2d")!;
   }
 
   /**
@@ -38,7 +40,7 @@ export class Canvas2DUtility {
    * @param {number} height - 塗りつぶす矩形の高さ
    * @param {string} [color] - 矩形を塗りつぶす際の色
    */
-  drawRect(x, y, width, height, color) {
+  drawRect(x: number, y: number, width: number, height: number, color: string) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.fillStyle = color;
@@ -54,7 +56,14 @@ export class Canvas2DUtility {
    * @param {string} [color] - 線を描画する際の色
    * @param {number} [width=1] - 線幅
    */
-  drawLine(x1, y1, x2, y2, color, width = 1) {
+  drawLine(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    color: string,
+    width = 1
+  ) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.strokeStyle = color;
@@ -78,7 +87,7 @@ export class Canvas2DUtility {
    * @param {Array<number>} points - 多角形の各頂点の座標
    * @param {string} [color] - 多角形を描画する際の色
    */
-  drawPolygon(points, color) {
+  drawPolygon(points: number[], color: string) {
     // points が配列であるかどうか確認し、多角形を描くために
     // 十分な個数のデータが存在するか調べる
     if (Array.isArray(points) !== true || points.length < 6) {
@@ -109,7 +118,7 @@ export class Canvas2DUtility {
    * @param {number} radius - 円の半径
    * @param {string} [color] - 円を描画する際の色
    */
-  drawCircle(x, y, radius, color) {
+  drawCircle(x: number, y: number, radius: number, color: string) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.fillStyle = color;
@@ -133,7 +142,14 @@ export class Canvas2DUtility {
    * @param {number} endRadian - 扇形の終了角
    * @param {string} [color] - 扇形を描画する際の色
    */
-  drawFan(x, y, radius, startRadian, endRadian, color) {
+  drawFan(
+    x: number,
+    y: number,
+    radius: number,
+    startRadian: number,
+    endRadian: number,
+    color: string
+  ) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.fillStyle = color;
@@ -161,7 +177,16 @@ export class Canvas2DUtility {
    * @param {string} [color] - 線を描画する際の色
    * @param {number} [width=1] - 線幅
    */
-  drawQuadraticBezier(x1, y1, x2, y2, cx, cy, color, width = 1) {
+  drawQuadraticBezier(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    cx: number,
+    cy: number,
+    color: string,
+    width = 1
+  ) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.strokeStyle = color;
@@ -193,7 +218,18 @@ export class Canvas2DUtility {
    * @param {string} [color] - 線を描画する際の色
    * @param {number} [width=1] - 線幅
    */
-  drawCubicBezier(x1, y1, x2, y2, cx1, cy1, cx2, cy2, color, width = 1) {
+  drawCubicBezier(
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    cx1: number,
+    cy1: number,
+    cx2: number,
+    cy2: number,
+    color: string,
+    width = 1
+  ) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.strokeStyle = color;
@@ -220,7 +256,7 @@ export class Canvas2DUtility {
    * @param {string} [color] - テキストを描画する際の色
    * @param {number} [width] - テキストを描画する幅に上限を設定する際の上限値
    */
-  drawText(text, x, y, color, width) {
+  drawText(text: string, x: number, y: number, color: string, width: number) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.fillStyle = color;
@@ -233,7 +269,10 @@ export class Canvas2DUtility {
    * @param {string} path - 画像ファイルのパス
    * @param {function} [callback] - コールバック関数
    */
-  imageLoader(path, callback) {
+  imageLoader(
+    path: string,
+    callback: ((arg0: HTMLImageElement) => void) | null
+  ) {
     // 画像のインスタンスを生成する
     let target = new Image();
     // 画像がロード完了したときの処理を先に記述する

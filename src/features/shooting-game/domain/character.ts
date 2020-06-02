@@ -1,48 +1,28 @@
 class Position {
-  /**
-   * ベクトルの長さを返す静的メソッド
-   * @static
-   * @param {number} x - X 要素
-   * @param {number} y - Y 要素
-   */
-  static calcLength(x, y) {
+  x: number;
+  y: number;
+  // ベクトルの長さを返す静的メソッド
+  static calcLength(x: number, y: number) {
     return Math.sqrt(x * x + y * y);
   }
-  /**
-   * ベクトルを単位化した結果を返す静的メソッド
-   * @static
-   * @param {number} x - X 要素
-   * @param {number} y - Y 要素
-   */
-  static calcNormal(x, y) {
+  // ベクトルを単位化した結果を返す静的メソッド
+  static calcNormal(x: number, y: number) {
     let len = Position.calcLength(x, y);
     return new Position(x / len, y / len);
   }
 
-  /**
-   * @constructor
-   * @param {number} x - X 座標
-   * @param {number} y - Y 座標
-   */
-  constructor(x, y) {
+  constructor(x: number, y: number) {
     /**
      * X 座標
-     * @type {number}
      */
     this.x = x;
     /**
      * Y 座標
-     * @type {number}
      */
     this.y = y;
   }
 
-  /**
-   * 値を設定する
-   * @param {number} [x] - 設定する X 座標
-   * @param {number} [y] - 設定する Y 座標
-   */
-  set(x, y) {
+  set(x: number, y: number) {
     if (x != null) {
       this.x = x;
     }
@@ -51,11 +31,8 @@ class Position {
     }
   }
 
-  /**
-   * 対象の Position クラスのインスタンスとの距離を返す
-   * @param {Position} target - 距離を測る対象
-   */
-  distance(target) {
+  // 対象の Position クラスのインスタンスとの距離を返す
+  distance(target: Position) {
     let x = this.x - target.x;
     let y = this.y - target.y;
     return Math.sqrt(x * x + y * y);
@@ -65,7 +42,7 @@ class Position {
    * 対象の Position クラスのインスタンスとの外積を計算する
    * @param {Position} target - 外積の計算を行う対象
    */
-  cross(target) {
+  cross(target: Position) {
     return this.x * target.y - this.y * target.x;
   }
 
@@ -90,7 +67,7 @@ class Position {
    * 指定されたラジアン分だけ自身を回転させる
    * @param {number} radian - 回転量
    */
-  rotate(radian) {
+  rotate(radian: number) {
     // 指定されたラジアンからサインとコサインを求める
     let s = Math.sin(radian);
     let c = Math.cos(radian);
@@ -104,6 +81,15 @@ class Position {
  * キャラクター管理のための基幹クラス
  */
 class Character {
+  ctx: CanvasRenderingContext2D;
+  position: Position;
+  vector: Position;
+  angle: number;
+  width: number;
+  height: number;
+  life: number;
+  ready: boolean;
+  image: HTMLImageElement;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -114,42 +100,23 @@ class Character {
    * @param {number} life - キャラクターのライフ（生存フラグを兼ねる）
    * @param {string} imagePath - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, life, imagePath) {
-    /**
-     * @type {CanvasRenderingContext2D}
-     */
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    life: number,
+    imagePath: string
+  ) {
     this.ctx = ctx;
-    /**
-     * @type {Position}
-     */
     this.position = new Position(x, y);
-    /**
-     * @type {Position}
-     */
     this.vector = new Position(0.0, -1.0);
-    /**
-     * @type {number}
-     */
     this.angle = (270 * Math.PI) / 180;
-    /**
-     * @type {number}
-     */
     this.width = w;
-    /**
-     * @type {number}
-     */
     this.height = h;
-    /**
-     * @type {number}
-     */
     this.life = life;
-    /**
-     * @type {boolean}
-     */
     this.ready = false;
-    /**
-     * @type {Image}
-     */
     this.image = new Image();
     this.image.addEventListener(
       "load",
@@ -167,7 +134,7 @@ class Character {
    * @param {number} x - X 方向の移動量
    * @param {number} y - Y 方向の移動量
    */
-  setVector(x, y) {
+  setVector(x: number, y: number) {
     // 自身の vector プロパティに設定する
     this.vector.set(x, y);
   }
@@ -176,7 +143,7 @@ class Character {
    * 進行方向を角度を元に設定する
    * @param {number} angle - 回転量（ラジアン）
    */
-  setVectorFromAngle(angle) {
+  setVectorFromAngle(angle: number) {
     // 自身の回転量を設定する
     this.angle = angle;
     // ラジアンからサインとコサインを求める
@@ -186,9 +153,7 @@ class Character {
     this.vector.set(cos, sin);
   }
 
-  /**
-   * キャラクターを描画する
-   */
+  // キャラクターを描画する
   draw() {
     // キャラクターの幅を考慮してオフセットする量
     let offsetX = this.width / 2;
@@ -232,6 +197,15 @@ class Character {
 }
 
 export class Viper extends Character {
+  speed: number;
+  shotCheckCounter: number;
+  shotInterval: number;
+  isComing: boolean;
+  comingStart: number;
+  comingStartPosition: Position;
+  comingEndPosition: Position;
+  shotArray: Shot[];
+  singleShotArray: Shot[];
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -241,7 +215,14 @@ export class Viper extends Character {
    * @param {number} h - 高さ
    * @param {Image} image - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, imagePath) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    imagePath: string
+  ) {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
 
@@ -269,27 +250,27 @@ export class Viper extends Character {
      * 登場演出を開始した際のタイムスタンプ
      * @type {number}
      */
-    this.comingStart = null;
+    this.comingStart = null as any;
     /**
      * 登場演出を開始する座標
      * @type {Position}
      */
-    this.comingStartPosition = null;
+    this.comingStartPosition = null as any;
     /**
      * 登場演出を完了とする座標
      * @type {Position}
      */
-    this.comingEndPosition = null;
+    this.comingEndPosition = null as any;
     /**
      * 自身が持つショットインスタンスの配列
      * @type {Array<Shot>}
      */
-    this.shotArray = null;
+    this.shotArray = null as any;
     /**
      * 自身が持つシングルショットインスタンスの配列
      * @type {Array<Shot>}
      */
-    this.singleShotArray = null;
+    this.singleShotArray = null as any;
   }
 
   /**
@@ -299,7 +280,7 @@ export class Viper extends Character {
    * @param {number} endX - 登場終了とする X 座標
    * @param {number} endY - 登場終了とする Y 座標
    */
-  setComing(startX, startY, endX, endY) {
+  setComing(startX: number, startY: number, endX: number, endY: number) {
     // 自機キャラクターのライフを 1 に設定する（復活する際を考慮）
     this.life = 1;
     // 登場中のフラグを立てる
@@ -319,7 +300,7 @@ export class Viper extends Character {
    * @param {Array<Shot>} shotArray - 自身に設定するショットの配列
    * @param {Array<Shot>} singleShotArray - 自身に設定するシングルショットの配列
    */
-  setShotArray(shotArray, singleShotArray) {
+  setShotArray(shotArray: Array<Shot>, singleShotArray: Array<Shot>) {
     // 自身のプロパティに設定する
     this.shotArray = shotArray;
     this.singleShotArray = singleShotArray;
@@ -328,7 +309,7 @@ export class Viper extends Character {
   /**
    * キャラクターの状態を更新し描画を行う
    */
-  update(isKeyDown) {
+  update(isKeyDown: { [k: string]: boolean }) {
     // ライフが尽きていたら何も操作できないようにする
     if (this.life <= 0) {
       return;
@@ -386,7 +367,7 @@ export class Viper extends Character {
             // 非生存かどうかを確認する
             if (this.shotArray[i].life <= 0) {
               // 自機キャラクターの座標にショットを生成する
-              this.shotArray[i].set(this.position.x, this.position.y);
+              this.shotArray[i].set(this.position.x, this.position.y, 0, 0);
               // 中央のショットは攻撃力を 2 にする
               this.shotArray[i].setPower(2);
               // ショットを生成したのでインターバルを設定する
@@ -407,9 +388,19 @@ export class Viper extends Character {
               let radCW = (280 * Math.PI) / 180; // 時計回りに 10 度分
               let radCCW = (260 * Math.PI) / 180; // 反時計回りに 10 度分
               // 自機キャラクターの座標にショットを生成する
-              this.singleShotArray[i].set(this.position.x, this.position.y);
+              this.singleShotArray[i].set(
+                this.position.x,
+                this.position.y,
+                0,
+                0
+              );
               this.singleShotArray[i].setVectorFromAngle(radCW); // やや右に向かう
-              this.singleShotArray[i + 1].set(this.position.x, this.position.y);
+              this.singleShotArray[i + 1].set(
+                this.position.x,
+                this.position.y,
+                0,
+                0
+              );
               this.singleShotArray[i + 1].setVectorFromAngle(radCCW); // やや左に向かう
               // ショットを生成したのでインターバルを設定する
               this.shotCheckCounter = -this.shotInterval;
@@ -433,6 +424,11 @@ export class Viper extends Character {
 }
 
 export class Enemy extends Character {
+  type: string;
+  frame: number;
+  speed: number;
+  shotArray: Shot[];
+  attackTarget: Character;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -442,7 +438,14 @@ export class Enemy extends Character {
    * @param {number} h - 高さ
    * @param {Image} image - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, imagePath) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    imagePath: string
+  ) {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
 
@@ -465,12 +468,12 @@ export class Enemy extends Character {
      * 自身が持つショットインスタンスの配列
      * @type {Array<Shot>}
      */
-    this.shotArray = null;
+    this.shotArray = null as any;
     /**
      * 自身が攻撃の対象とする Character 由来のインスタンス
      * @type {Character}
      */
-    this.attackTarget = null;
+    this.attackTarget = null as any;
   }
 
   /**
@@ -480,7 +483,7 @@ export class Enemy extends Character {
    * @param {number} [life=1] - 設定するライフ
    * @param {string} [type='default'] - 設定するタイプ
    */
-  set(x, y, life = 1, type = "default") {
+  set(x: number, y: number, life: number = 1, type: string = "default") {
     // 登場開始位置に敵キャラクターを移動させる
     this.position.set(x, y);
     // 敵キャラクターのライフを 0 より大きい値（生存の状態）に設定する
@@ -495,7 +498,7 @@ export class Enemy extends Character {
    * ショットを設定する
    * @param {Array<Shot>} shotArray - 自身に設定するショットの配列
    */
-  setShotArray(shotArray) {
+  setShotArray(shotArray: Array<Shot>) {
     // 自身のプロパティに設定する
     this.shotArray = shotArray;
   }
@@ -504,7 +507,7 @@ export class Enemy extends Character {
    * 攻撃対象を設定する
    * @param {Character} target - 自身が攻撃対象とするインスタンス
    */
-  setAttackTarget(target) {
+  setAttackTarget(target: Character) {
     // 自身のプロパティに設定する
     this.attackTarget = target;
   }
@@ -594,13 +597,13 @@ export class Enemy extends Character {
    * @param {number} [x=0.0] - 進行方向ベクトルの X 要素
    * @param {number} [y=1.0] - 進行方向ベクトルの Y 要素
    */
-  fire(x = 0.0, y = 1.0, speed = 5.0) {
+  fire(x: number = 0.0, y: number = 1.0, speed = 5.0) {
     // ショットの生存を確認し非生存のものがあれば生成する
     for (let i = 0; i < this.shotArray.length; ++i) {
       // 非生存かどうかを確認する
       if (this.shotArray[i].life <= 0) {
         // 敵キャラクターの座標にショットを生成する
-        this.shotArray[i].set(this.position.x, this.position.y);
+        this.shotArray[i].set(this.position.x, this.position.y, 0, 0);
         // ショットのスピードを設定する
         this.shotArray[i].setSpeed(speed);
         // ショットの進行方向を設定する（真下）
@@ -613,6 +616,12 @@ export class Enemy extends Character {
 }
 
 export class Boss extends Character {
+  mode: string;
+  frame: number;
+  speed: number;
+  shotArray: Shot[];
+  homingArray: Homing[];
+  attackTarget: Character;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -622,7 +631,14 @@ export class Boss extends Character {
    * @param {number} h - 高さ
    * @param {Image} image - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, imagePath) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    imagePath: string
+  ) {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
 
@@ -645,17 +661,17 @@ export class Boss extends Character {
      * 自身が持つショットインスタンスの配列
      * @type {Array<Shot>}
      */
-    this.shotArray = null;
+    this.shotArray = null as any;
     /**
      * 自身が持つホーミングショットインスタンスの配列
      * @type {Array<Homing>}
      */
-    this.homingArray = null;
+    this.homingArray = null as any;
     /**
      * 自身が攻撃の対象とする Character 由来のインスタンス
      * @type {Character}
      */
-    this.attackTarget = null;
+    this.attackTarget = null as any;
   }
 
   /**
@@ -664,7 +680,7 @@ export class Boss extends Character {
    * @param {number} y - 配置する Y 座標
    * @param {number} [life=1] - 設定するライフ
    */
-  set(x, y, life = 1) {
+  set(x: number, y: number, life: number = 1) {
     // 登場開始位置にボスキャラクターを移動させる
     this.position.set(x, y);
     // ボスキャラクターのライフを 0 より大きい値（生存の状態）に設定する
@@ -677,7 +693,7 @@ export class Boss extends Character {
    * ショットを設定する
    * @param {Array<Shot>} shotArray - 自身に設定するショットの配列
    */
-  setShotArray(shotArray) {
+  setShotArray(shotArray: Array<Shot>) {
     // 自身のプロパティに設定する
     this.shotArray = shotArray;
   }
@@ -686,7 +702,7 @@ export class Boss extends Character {
    * ホーミングショットを設定する
    * @param {Array<Homing>} homingArray - 自身に設定するホーミングショットの配列
    */
-  setHomingArray(homingArray) {
+  setHomingArray(homingArray: Array<Homing>) {
     // 自身のプロパティに設定する
     this.homingArray = homingArray;
   }
@@ -695,7 +711,7 @@ export class Boss extends Character {
    * 攻撃対象を設定する
    * @param {Character} target - 自身が攻撃対象とするインスタンス
    */
-  setAttackTarget(target) {
+  setAttackTarget(target: Character) {
     // 自身のプロパティに設定する
     this.attackTarget = target;
   }
@@ -704,7 +720,7 @@ export class Boss extends Character {
    * モードを設定する
    * @param {string} mode - 自身に設定するモード
    */
-  setMode(mode) {
+  setMode(mode: string) {
     // 自身のプロパティに設定する
     this.mode = mode;
   }
@@ -776,13 +792,13 @@ export class Boss extends Character {
    * @param {number} [y=1.0] - 進行方向ベクトルの Y 要素
    * @param {number} [speed=5.0] - ショットのスピード
    */
-  fire(x = 0.0, y = 1.0, speed = 5.0) {
+  fire(x: number = 0.0, y: number = 1.0, speed: number = 5.0) {
     // ショットの生存を確認し非生存のものがあれば生成する
     for (let i = 0; i < this.shotArray.length; ++i) {
       // 非生存かどうかを確認する
       if (this.shotArray[i].life <= 0) {
         // ボスキャラクターの座標にショットを生成する
-        this.shotArray[i].set(this.position.x, this.position.y);
+        this.shotArray[i].set(this.position.x, this.position.y, 0, 0);
         // ショットのスピードを設定する
         this.shotArray[i].setSpeed(speed);
         // ショットの進行方向を設定する（真下）
@@ -799,13 +815,13 @@ export class Boss extends Character {
    * @param {number} [y=1.0] - 進行方向ベクトルの Y 要素
    * @param {number} [speed=3.0] - ショットのスピード
    */
-  homingFire(x = 0.0, y = 1.0, speed = 3.0) {
+  homingFire(x: number = 0.0, y: number = 1.0, speed: number = 3.0) {
     // ショットの生存を確認し非生存のものがあれば生成する
     for (let i = 0; i < this.homingArray.length; ++i) {
       // 非生存かどうかを確認する
       if (this.homingArray[i].life <= 0) {
         // ボスキャラクターの座標にショットを生成する
-        this.homingArray[i].set(this.position.x, this.position.y);
+        this.homingArray[i].set(this.position.x, this.position.y, 0, 0);
         // ショットのスピードを設定する
         this.homingArray[i].setSpeed(speed);
         // ショットの進行方向を設定する（真下）
@@ -818,6 +834,10 @@ export class Boss extends Character {
 }
 
 export class Shot extends Character {
+  speed: number;
+  power: number;
+  targetArray: Character[];
+  explosionArray: Explosion[];
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -827,7 +847,14 @@ export class Shot extends Character {
    * @param {number} h - 高さ
    * @param {Image} image - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, imagePath) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    imagePath: string
+  ) {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
 
@@ -846,6 +873,7 @@ export class Shot extends Character {
      * @type {Array<Character>}
      */
     this.targetArray = [];
+    this.explosionArray = [];
   }
 
   /**
@@ -855,7 +883,7 @@ export class Shot extends Character {
    * @param {number} [speed] - 設定するスピード
    * @param {number} [power] - 設定する攻撃力
    */
-  set(x, y, speed, power) {
+  set(x: number, y: number, speed: number, power: number) {
     // 登場開始位置にショットを移動させる
     this.position.set(x, y);
     // ショットのライフを 0 より大きい値（生存の状態）に設定する
@@ -870,7 +898,7 @@ export class Shot extends Character {
    * ショットのスピードを設定する
    * @param {number} [speed] - 設定するスピード
    */
-  setSpeed(speed) {
+  setSpeed(speed: number) {
     // もしスピード引数が有効なら設定する
     if (speed != null && speed > 0) {
       this.speed = speed;
@@ -881,7 +909,7 @@ export class Shot extends Character {
    * ショットの攻撃力を設定する
    * @param {number} [power] - 設定する攻撃力
    */
-  setPower(power) {
+  setPower(power: number) {
     // もしスピード引数が有効なら設定する
     if (power != null && power > 0) {
       this.power = power;
@@ -892,7 +920,7 @@ export class Shot extends Character {
    * ショットが衝突判定を行う対象を設定する
    * @param {Array<Character>} [targets] - 衝突判定の対象を含む配列
    */
-  setTargets(targets) {
+  setTargets(targets: Array<Character>) {
     // 引数の状態を確認して有効な場合は設定する
     if (targets && Array.isArray(targets) && targets.length) {
       this.targetArray = targets;
@@ -903,7 +931,7 @@ export class Shot extends Character {
    * ショットが爆発エフェクトを発生できるよう設定する
    * @param {Array<Explosion>} [targets] - 爆発エフェクトを含む配列
    */
-  setExplosions(targets) {
+  setExplosions(targets: Array<Explosion>) {
     // 引数の状態を確認して有効な場合は設定する
     if (targets && Array.isArray(targets) && targets.length) {
       this.explosionArray = targets;
@@ -957,7 +985,7 @@ export class Shot extends Character {
               break;
             }
           }
-          // TODO event発行してsubscribeした側でスコアを加算する
+          // TODO 撃破eventを発行してsubscribeした側でスコアを加算する
           // もし対象が敵キャラクターの場合はスコアを加算する
           // if (v instanceof Enemy === true) {
           //   // 敵キャラクターのタイプによってスコアが変化するようにする
@@ -980,6 +1008,7 @@ export class Shot extends Character {
 }
 
 export class Homing extends Shot {
+  frame: number;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -989,7 +1018,14 @@ export class Homing extends Shot {
    * @param {number} h - 高さ
    * @param {Image} image - キャラクター用の画像のパス
    */
-  constructor(ctx, x, y, w, h, imagePath) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    imagePath: string
+  ) {
     // 継承元（Shot）の初期化
     super(ctx, x, y, w, h, imagePath);
 
@@ -1004,7 +1040,7 @@ export class Homing extends Shot {
    * @param {number} [speed] - 設定するスピード
    * @param {number} [power] - 設定する攻撃力
    */
-  set(x, y, speed, power) {
+  set(x: number, y: number, speed: number, power: number) {
     // 登場開始位置にショットを移動させる
     this.position.set(x, y);
     // ショットのライフを 0 より大きい値（生存の状態）に設定する
@@ -1079,7 +1115,7 @@ export class Homing extends Shot {
       }
       let dist = this.position.distance(v.position);
       if (dist <= (this.width + v.width) / 4) {
-        if (v instanceof Viper === true) {
+        if (v instanceof Viper) {
           if (v.isComing === true) {
             return;
           }
@@ -1112,6 +1148,18 @@ export class Homing extends Shot {
 }
 
 export class Explosion {
+  ctx: any;
+  life: boolean;
+  color: string;
+  position: null;
+  radius: any;
+  count: any;
+  startTime: number;
+  timeRange: any;
+  fireSize: any;
+  fireBaseSize: any;
+  firePosition: Position[];
+  fireVector: Position[];
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -1121,7 +1169,14 @@ export class Explosion {
    * @param {number} timeRange - 爆発が消えるまでの時間（秒単位）
    * @param {string} [color='#ff1166'] - 爆発の色
    */
-  constructor(ctx, radius, count, size, timeRange, color = "#ff1166") {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    radius: number,
+    count: number,
+    size: number,
+    timeRange: number,
+    color: string = "#ff1166"
+  ) {
     /**
      * @type {CanvasRenderingContext2D}
      */
@@ -1193,7 +1248,7 @@ export class Explosion {
    * @param {number} x - 爆発を発生させる X 座標
    * @param {number} y - 爆発を発生させる Y 座標
    */
-  set(x, y) {
+  set(x: number, y: number) {
     // 火花の個数分ループして生成する
     for (let i = 0; i < this.count; ++i) {
       // 引数を元に位置を決める
@@ -1258,6 +1313,11 @@ export class Explosion {
 }
 
 export class BackgroundStar {
+  ctx: any;
+  size: any;
+  speed: any;
+  color: string;
+  position: Position;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -1265,7 +1325,12 @@ export class BackgroundStar {
    * @param {number} speed - 星の移動速度
    * @param {string} [color='#ffffff'] - 星の色
    */
-  constructor(ctx, size, speed, color = "#ffffff") {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    size: number,
+    speed: number,
+    color: string = "#ffffff"
+  ) {
     /**
      * @type {CanvasRenderingContext2D}
      */
@@ -1289,7 +1354,7 @@ export class BackgroundStar {
      * 自身の座標
      * @type {Position}
      */
-    this.position = null;
+    this.position = null as any;
   }
 
   /**
@@ -1297,7 +1362,7 @@ export class BackgroundStar {
    * @param {number} x - 星を発生させる X 座標
    * @param {number} y - 星を発生させる Y 座標
    */
-  set(x, y) {
+  set(x: number, y: number) {
     // 引数を元に位置を決める
     this.position = new Position(x, y);
   }
@@ -1324,6 +1389,6 @@ export class BackgroundStar {
   }
 }
 
-function simpleEaseIn(t) {
+function simpleEaseIn(t: number) {
   return t * t * t * t;
 }
