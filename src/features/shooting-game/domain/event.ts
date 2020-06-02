@@ -4,6 +4,7 @@ import { Character } from "./model/character";
 import store from "../../../app/store";
 import { actions } from "../slice";
 import { Enemy } from "./model/enemy";
+import { Boss } from "./model/boss";
 
 export class Event {
   emitter: EventEmitter;
@@ -15,12 +16,12 @@ export class Event {
   public addOnDestroyEvent() {
     this.emitter.on(
       "destroy",
-      ({ shot, target }: { shot: Shot; target: Character }) => {
+      ({ self, target }: { self: Shot | Enemy | Boss; target: Character }) => {
         if (target.life <= 0) {
-          for (let i = 0; i < shot.explosionArray.length; ++i) {
+          for (let i = 0; i < self.explosionArray.length; ++i) {
             // 発生していない爆発エフェクトがあれば対象の位置に生成する
-            if (!shot.explosionArray[i].life) {
-              shot.explosionArray[i].set(target.position.x, target.position.y);
+            if (!self.explosionArray[i].life) {
+              self.explosionArray[i].set(target.position.x, target.position.y);
               break;
             }
           }
@@ -37,8 +38,10 @@ export class Event {
           }
         }
 
-        // 自身のライフを 0 にする
-        shot.life = 0;
+        if (self instanceof Shot) {
+          // Shotの場合、衝突すると消滅させる
+          self.life = 0;
+        }
       }
     );
   }

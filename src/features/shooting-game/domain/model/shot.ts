@@ -131,13 +131,13 @@ export class Shot extends Character {
     // ショットと対象との衝突判定を行う
     this.targetArray.forEach((v) => {
       judgeCollision({
-        shot: this,
+        self: this,
         target: v,
         cb: () => {
           // 対象のライフを攻撃力分減算する
           v.life -= this.power;
           // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
-          this.event.emitter.emit("destroy", { shot: this, target: v });
+          this.event.emitter.emit("destroy", { self: this, target: v });
         },
       });
     });

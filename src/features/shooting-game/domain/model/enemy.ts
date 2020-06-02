@@ -1,6 +1,9 @@
 import { Position } from "./position";
 import { Character } from "./character";
 import { Shot } from "./shot";
+import { Event } from "../event";
+import { judgeCollision } from "../service/position";
+import { Explosion } from "./explosion";
 
 export class Enemy extends Character {
   type: string;
@@ -8,6 +11,8 @@ export class Enemy extends Character {
   speed: number;
   shotArray: Shot[];
   attackTarget: Character;
+  explosionArray: Explosion[];
+  event: Event;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -53,6 +58,12 @@ export class Enemy extends Character {
      * @type {Character}
      */
     this.attackTarget = null as any;
+
+    this.explosionArray = [];
+
+    const event = new Event();
+    event.addOnDestroyEvent();
+    this.event = event;
   }
 
   /**
@@ -91,6 +102,13 @@ export class Enemy extends Character {
     this.attackTarget = target;
   }
 
+  setExplosions(targets: Array<Explosion>) {
+    // 引数の状態を確認して有効な場合は設定する
+    if (targets && Array.isArray(targets) && targets.length) {
+      this.explosionArray = targets;
+    }
+  }
+
   /**
    * キャラクターの状態を更新し描画を行う
    * TODO Shotのupdateにある衝突のコード、ここにもかく。現在敵とぶつかってもダメージ受けない。
@@ -120,6 +138,21 @@ export class Enemy extends Character {
         DefaultEnemy.action(this);
         break;
     }
+
+    // Viperとの衝突判定
+    judgeCollision({
+      self: this,
+      target: this.attackTarget,
+      cb: () => {
+        // Viperのライフを2減らす。
+        this.attackTarget.life -= 2;
+        // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+        this.event.emitter.emit("destroy", {
+          self: this,
+          target: this.attackTarget,
+        });
+      },
+    });
 
     // 描画を行う（いまのところ特に回転は必要としていないのでそのまま描画）
     this.draw();

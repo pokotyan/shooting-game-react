@@ -42,6 +42,7 @@ let isKeyDown: {
   [k: string]: boolean;
 } = {};
 
+// TODO ポーズ機能を作る。space押下でポーズ
 const init = () => {
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
@@ -109,6 +110,7 @@ const init = () => {
   boss.setHomingArray(homingArray);
   // 敵キャラクターは常に自機キャラクターを攻撃対象とする
   boss.setAttackTarget(viper);
+  boss.setExplosions(explosionArray);
 
   // 敵キャラクター（小）を初期化する
   for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; ++i) {
@@ -117,6 +119,7 @@ const init = () => {
     enemyArray[i].setShotArray(enemyShotArray);
     // 敵キャラクターは常に自機キャラクターを攻撃対象とする
     enemyArray[i].setAttackTarget(viper);
+    enemyArray[i].setExplosions(explosionArray);
   }
 
   // 敵キャラクター（大）を初期化する

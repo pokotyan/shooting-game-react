@@ -108,13 +108,13 @@ export class Homing extends Shot {
     // ※以下は Shot クラスの衝突判定とまったく同じロジック
     this.targetArray.forEach((v) => {
       judgeCollision({
-        shot: this,
+        self: this,
         target: v,
         cb: () => {
           // 対象のライフを攻撃力分減算する
           v.life -= this.power;
           // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
-          this.event.emitter.emit("destroy", { shot: this, target: v });
+          this.event.emitter.emit("destroy", { self: this, target: v });
         },
       });
     });

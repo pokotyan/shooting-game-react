@@ -2,6 +2,9 @@ import { Position } from "./position";
 import { Character } from "./character";
 import { Shot } from "./shot";
 import { Homing } from "./homing";
+import { Explosion } from "./explosion";
+import { Event } from "../event";
+import { judgeCollision } from "../service/position";
 
 export class Boss extends Character {
   mode: string;
@@ -10,6 +13,8 @@ export class Boss extends Character {
   shotArray: Shot[];
   homingArray: Homing[];
   attackTarget: Character;
+  explosionArray: Explosion[];
+  event: Event;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -60,6 +65,12 @@ export class Boss extends Character {
      * @type {Character}
      */
     this.attackTarget = null as any;
+
+    this.explosionArray = [];
+
+    const event = new Event();
+    event.addOnDestroyEvent();
+    this.event = event;
   }
 
   /**
@@ -104,6 +115,13 @@ export class Boss extends Character {
     this.attackTarget = target;
   }
 
+  setExplosions(targets: Array<Explosion>) {
+    // 引数の状態を確認して有効な場合は設定する
+    if (targets && Array.isArray(targets) && targets.length) {
+      this.explosionArray = targets;
+    }
+  }
+
   /**
    * モードを設定する
    * @param {string} mode - 自身に設定するモード
@@ -138,6 +156,21 @@ export class Boss extends Character {
       default:
         break;
     }
+
+    // Viperとの衝突判定
+    judgeCollision({
+      self: this,
+      target: this.attackTarget,
+      cb: () => {
+        // Viperのライフを2減らす。
+        this.attackTarget.life -= 2;
+        // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+        this.event.emitter.emit("destroy", {
+          self: this,
+          target: this.attackTarget,
+        });
+      },
+    });
 
     // 描画を行う（いまのところ特に回転は必要としていないのでそのまま描画）
     this.draw();
