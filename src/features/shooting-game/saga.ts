@@ -2,15 +2,13 @@ import { all, fork, take } from "redux-saga/effects";
 import { actions } from "./slice";
 import { Canvas2DUtility } from "./utils/canvas2d";
 import { SceneManager } from "./domain/scene";
-import {
-  Shot,
-  Viper,
-  Enemy,
-  Explosion,
-  BackgroundStar,
-  Homing,
-  Boss,
-} from "./domain/character";
+import { Shot } from "./domain/shot";
+import { Viper } from "./domain/viper";
+import { Enemy } from "./domain/enemy";
+import { Boss } from "./domain/boss";
+import { Explosion } from "./domain/explosion";
+import { BackgroundStar } from "./domain/background-star";
+import { Homing } from "./domain/homing";
 
 const CANVAS_WIDTH = 640;
 const CANVAS_HEIGHT = 480;
