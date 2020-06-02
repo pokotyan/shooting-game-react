@@ -126,43 +126,14 @@ export class Boss extends Character {
     switch (this.mode) {
       // 出現演出時
       case "invade":
-        this.position.y += this.speed;
-        if (this.position.y > 100) {
-          this.position.y = 100;
-          this.mode = "floating";
-          this.frame = 0;
-        }
+        InvadeAction.action(this);
         break;
       // 退避する演出時
       case "escape":
-        this.position.y -= this.speed;
-        if (this.position.y < -this.height) {
-          this.life = 0;
-        }
+        EscapeAction.action(this);
         break;
       case "floating":
-        // 配置後のフレーム数を 1000 で割ったとき、余りが 500 未満となる
-        // 場合と、そうでない場合で、ショットに関する挙動を変化させる
-        if (this.frame % 1000 < 500) {
-          // 配置後のフレーム数を 200 で割った余りが 140 より大きく、かつ、
-          // 10 で割り切れる場合に、自機キャラクター狙いショットを放つ
-          if (this.frame % 200 > 140 && this.frame % 10 === 0) {
-            // 攻撃対象となる自機キャラクターに向かうベクトル
-            let tx = this.attackTarget.position.x - this.position.x;
-            let ty = this.attackTarget.position.y - this.position.y;
-            // ベクトルを単位化する
-            let tv = Position.calcNormal(tx, ty);
-            // 自機キャラクターにややゆっくりめのショットを放つ
-            this.fire(tv.x, tv.y, 3.0);
-          }
-        } else {
-          // ホーミングショットを放つ
-          if (this.frame % 50 === 0) {
-            this.homingFire(0, 1, 3.5);
-          }
-        }
-        // X 座標はサイン波で左右に揺れるように動かす
-        this.position.x += Math.cos(this.frame / 100) * 2.0;
+        FloatingAction.action(this);
         break;
       default:
         break;
@@ -218,5 +189,52 @@ export class Boss extends Character {
         break;
       }
     }
+  }
+}
+
+class InvadeAction {
+  static action(boss: Boss) {
+    boss.position.y += boss.speed;
+    if (boss.position.y > 100) {
+      boss.position.y = 100;
+      boss.mode = "floating";
+      boss.frame = 0;
+    }
+  }
+}
+
+class EscapeAction {
+  static action(boss: Boss) {
+    boss.position.y -= boss.speed;
+    if (boss.position.y < -boss.height) {
+      boss.life = 0;
+    }
+  }
+}
+
+class FloatingAction {
+  static action(boss: Boss) {
+    // 配置後のフレーム数を 1000 で割ったとき、余りが 500 未満となる
+    // 場合と、そうでない場合で、ショットに関する挙動を変化させる
+    if (boss.frame % 1000 < 500) {
+      // 配置後のフレーム数を 200 で割った余りが 140 より大きく、かつ、
+      // 10 で割り切れる場合に、自機キャラクター狙いショットを放つ
+      if (boss.frame % 200 > 140 && boss.frame % 10 === 0) {
+        // 攻撃対象となる自機キャラクターに向かうベクトル
+        let tx = boss.attackTarget.position.x - boss.position.x;
+        let ty = boss.attackTarget.position.y - boss.position.y;
+        // ベクトルを単位化する
+        let tv = Position.calcNormal(tx, ty);
+        // 自機キャラクターにややゆっくりめのショットを放つ
+        boss.fire(tv.x, tv.y, 3.0);
+      }
+    } else {
+      // ホーミングショットを放つ
+      if (boss.frame % 50 === 0) {
+        boss.homingFire(0, 1, 3.5);
+      }
+    }
+    // X 座標はサイン波で左右に揺れるように動かす
+    boss.position.x += Math.cos(boss.frame / 100) * 2.0;
   }
 }

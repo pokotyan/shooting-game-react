@@ -107,61 +107,17 @@ export class Enemy extends Character {
       // wave タイプはサイン波で左右に揺れるように動く
       // ショットの向きは自機キャラクターの方向に放つ
       case "wave":
-        // 配置後のフレームが 60 で割り切れるときにショットを放つ
-        if (this.frame % 60 === 0) {
-          // 攻撃対象となる自機キャラクターに向かうベクトル
-          let tx = this.attackTarget.position.x - this.position.x;
-          let ty = this.attackTarget.position.y - this.position.y;
-          // ベクトルを単位化する
-          let tv = Position.calcNormal(tx, ty);
-          // 自機キャラクターにややゆっくりめのショットを放つ
-          this.fire(tv.x, tv.y, 4.0);
-        }
-        // X 座標はサイン波で、Y 座標は一定量で変化する
-        this.position.x += Math.sin(this.frame / 10);
-        this.position.y += 2.0;
-        // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-        if (this.position.y - this.height > this.ctx.canvas.height) {
-          this.life = 0;
-        }
+        WaveEnemy.action(this);
         break;
       // large タイプはサイン波で左右に揺れるようにゆっくりと動く
       // ショットの向きは放射状にばらまく
       case "large":
-        // 配置後のフレームが 50 で割り切れるときにショットを放つ
-        if (this.frame % 50 === 0) {
-          // 45 度ごとにオフセットした全方位弾を放つ
-          for (let i = 0; i < 360; i += 45) {
-            let r = (i * Math.PI) / 180;
-            // ラジアンからサインとコサインを求める
-            let s = Math.sin(r);
-            let c = Math.cos(r);
-            // 求めたサイン・コサインでショットを放つ
-            this.fire(c, s, 3.0);
-          }
-        }
-        // X 座標はサイン波で、Y 座標は一定量で変化する
-        this.position.x += Math.sin((this.frame + 90) / 50) * 2.0;
-        this.position.y += 1.0;
-        // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-        if (this.position.y - this.height > this.ctx.canvas.height) {
-          this.life = 0;
-        }
+        LargeEnemy.action(this);
         break;
       // default タイプは設定されている進行方向にまっすぐ進むだけの挙動
       case "default":
       default:
-        // 配置後のフレームが 100 のときにショットを放つ
-        if (this.frame === 100) {
-          this.fire();
-        }
-        // 敵キャラクターを進行方向に沿って移動させる
-        this.position.x += this.vector.x * this.speed;
-        this.position.y += this.vector.y * this.speed;
-        // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-        if (this.position.y - this.height > this.ctx.canvas.height) {
-          this.life = 0;
-        }
+        DefaultEnemy.action(this);
         break;
     }
 
@@ -190,6 +146,68 @@ export class Enemy extends Character {
         // ひとつ生成したらループを抜ける
         break;
       }
+    }
+  }
+}
+
+class WaveEnemy {
+  static action(enemy: Enemy) {
+    // 配置後のフレームが 60 で割り切れるときにショットを放つ
+    if (enemy.frame % 60 === 0) {
+      // 攻撃対象となる自機キャラクターに向かうベクトル
+      let tx = enemy.attackTarget.position.x - enemy.position.x;
+      let ty = enemy.attackTarget.position.y - enemy.position.y;
+      // ベクトルを単位化する
+      let tv = Position.calcNormal(tx, ty);
+      // 自機キャラクターにややゆっくりめのショットを放つ
+      enemy.fire(tv.x, tv.y, 4.0);
+    }
+    // X 座標はサイン波で、Y 座標は一定量で変化する
+    enemy.position.x += Math.sin(enemy.frame / 10);
+    enemy.position.y += 2.0;
+    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
+    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
+      enemy.life = 0;
+    }
+  }
+}
+
+class LargeEnemy {
+  static action(enemy: Enemy) {
+    // 配置後のフレームが 50 で割り切れるときにショットを放つ
+    if (enemy.frame % 50 === 0) {
+      // 45 度ごとにオフセットした全方位弾を放つ
+      for (let i = 0; i < 360; i += 45) {
+        let r = (i * Math.PI) / 180;
+        // ラジアンからサインとコサインを求める
+        let s = Math.sin(r);
+        let c = Math.cos(r);
+        // 求めたサイン・コサインでショットを放つ
+        enemy.fire(c, s, 3.0);
+      }
+    }
+    // X 座標はサイン波で、Y 座標は一定量で変化する
+    enemy.position.x += Math.sin((enemy.frame + 90) / 50) * 2.0;
+    enemy.position.y += 1.0;
+    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
+    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
+      enemy.life = 0;
+    }
+  }
+}
+
+class DefaultEnemy {
+  static action(enemy: Enemy) {
+    // 配置後のフレームが 100 のときにショットを放つ
+    if (enemy.frame === 100) {
+      enemy.fire();
+    }
+    // 敵キャラクターを進行方向に沿って移動させる
+    enemy.position.x += enemy.vector.x * enemy.speed;
+    enemy.position.y += enemy.vector.y * enemy.speed;
+    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
+    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
+      enemy.life = 0;
     }
   }
 }

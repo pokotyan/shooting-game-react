@@ -1,6 +1,5 @@
 import { Position } from "./position";
 import { Shot } from "./shot";
-import { Viper } from "./viper";
 import { Event } from "../event";
 import { judgeCollision } from "../service/position";
 import { isOverflow } from "../service/shot";
