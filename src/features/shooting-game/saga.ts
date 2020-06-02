@@ -402,8 +402,11 @@ function render() {
 
   viper.update(isKeyDown);
 
-  // ボスキャラクターの状態を更新する
   boss.update();
+
+  homingArray.forEach((v: any) => {
+    v.update();
+  });
 
   enemyArray.forEach((v: any) => {
     v.update();
