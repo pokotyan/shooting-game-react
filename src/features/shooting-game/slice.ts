@@ -1,15 +1,21 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface GameState {}
+interface GameState {
+  point: number;
+}
 
-const initialState: GameState = {};
+const initialState: GameState = {
+  point: 0,
+};
 
 export const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
     initialize: (state, action: PayloadAction<HTMLCanvasElement>) => {},
-    start: () => {},
+    addPoint: (state, action: PayloadAction<number>) => {
+      state.point += action.payload;
+    },
   },
 });
 

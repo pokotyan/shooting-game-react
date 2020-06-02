@@ -1,14 +1,15 @@
 import { all, fork, take } from "redux-saga/effects";
 import { actions } from "./slice";
 import { Canvas2DUtility } from "./utils/canvas2d";
-import { SceneManager } from "./domain/scene";
-import { Shot } from "./domain/shot";
-import { Viper } from "./domain/viper";
-import { Enemy } from "./domain/enemy";
-import { Boss } from "./domain/boss";
-import { Explosion } from "./domain/explosion";
-import { BackgroundStar } from "./domain/background-star";
-import { Homing } from "./domain/homing";
+import { SceneManager } from "./domain/model/scene";
+import { Shot } from "./domain/model/shot";
+import { Viper } from "./domain/model/viper";
+import { Enemy } from "./domain/model/enemy";
+import { Boss } from "./domain/model/boss";
+import { Explosion } from "./domain/model/explosion";
+import { BackgroundStar } from "./domain/model/background-star";
+import { Homing } from "./domain/model/homing";
+import store, { RootState } from "../../app/store";
 
 const CANVAS_WIDTH = 640;
 const CANVAS_HEIGHT = 480;
@@ -22,21 +23,20 @@ const BACKGROUND_STAR_MAX_COUNT = 100;
 const BACKGROUND_STAR_MAX_SIZE = 3;
 const BACKGROUND_STAR_MAX_SPEED = 4;
 
-let util: any = null;
-let canvas: any = null;
-let ctx: any = null;
-let scene: any = null;
+let util: Canvas2DUtility = null as any;
+let canvas: HTMLCanvasElement = null as any;
+let ctx: CanvasRenderingContext2D = null as any;
+let scene: SceneManager = null as any;
 // let startTime: any = null;
-let viper: any = null;
-let enemyArray: any = [];
-let shotArray: any = [];
-let singleShotArray: any = [];
-let enemyShotArray: any = [];
-let boss: any = null;
-let homingArray: any = [];
-let explosionArray: any = [];
-let backgroundStarArray: any = [];
-// let gameScore = 0;
+let viper: Viper = null as any;
+let enemyArray: Array<Enemy | Boss> = [];
+let shotArray: Shot[] = [];
+let singleShotArray: Shot[] = [];
+let enemyShotArray: Shot[] = [];
+let boss: Boss = null as any;
+let homingArray: Homing[] = [];
+let explosionArray: Explosion[] = [];
+let backgroundStarArray: BackgroundStar[] = [];
 let restart = false;
 let isKeyDown: {
   [k: string]: boolean;
@@ -91,7 +91,7 @@ const init = () => {
   for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
     enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, "enemy_shot.png");
     enemyShotArray[i].setTargets([viper]);
-    enemyShotArray[i].setExplosions(explosionArray);
+    enemyShotArray[i].setExplosions(explosionArray); // 思ったけどショットが爆発のarray持ってるの変。viper or enemy or bossが持ってるべきでは？
   }
 
   // ボスキャラクターのホーミングショットを初期化する
@@ -163,7 +163,7 @@ const init = () => {
   }
 };
 
-function loadCheck() {
+function loading() {
   let ready = true;
 
   ready = ready && viper.ready;
@@ -180,19 +180,9 @@ function loadCheck() {
     ready = ready && v.ready;
   });
 
-  // 全ての準備が完了したら次の処理に進む
-  if (ready === true) {
-    // イベントを設定する
-    eventSetting();
-    // シーンを定義する
-    sceneSetting();
-    // 実行開始時のタイムスタンプを取得する
-    // startTime = Date.now();
-    // 描画処理を開始する
-    render();
-  } else {
+  if (!ready) {
     // 準備が完了していない場合は 0.1 秒ごとに再帰呼出しする
-    setTimeout(loadCheck, 100);
+    setTimeout(loading, 100);
   }
 }
 
@@ -385,12 +375,13 @@ function render() {
   ctx.globalAlpha = 1.0;
   // 描画前に画面全体を暗いネイビーで塗りつぶす
   util.drawRect(0, 0, canvas.width, canvas.height, "#111122");
-  // 現在までの経過時間を取得する（ミリ秒を秒に変換するため 1000 で除算）
-  // let nowTime = (Date.now() - startTime) / 1000;
 
-  // TODO スコアの表示
-  // ctx.font = "bold 24px monospace";
-  // util.drawText(zeroPadding(gameScore, 5), 30, 50, "#ffffff");
+  // スコアの表示
+  const {
+    game: { point },
+  }: RootState = store.getState();
+  ctx.font = "bold 24px monospace";
+  util.drawText(zeroPadding(point, 5), 30, 50, "#ffffff");
 
   scene.update();
 
@@ -422,7 +413,6 @@ function render() {
     v.update();
   });
 
-  // 爆発エフェクトの状態を更新する
   explosionArray.forEach((v: any) => {
     v.update();
   });
@@ -443,14 +433,14 @@ const degreesToRadians = (degrees: number) => {
  * @param {number} number - 数値
  * @param {number} count - 桁数（２桁以上）
  */
-// function zeroPadding(number: number, count: number) {
-//   // 配列を指定の桁数分の長さで初期化する
-//   let zeroArray = new Array(count);
-//   // 配列の要素を '0' を挟んで連結する（つまり「桁数 - 1」の 0 が連なる）
-//   let zeroString = zeroArray.join("0") + number;
-//   // 文字列の後ろから桁数分だけ文字を抜き取る
-//   return zeroString.slice(-count);
-// }
+function zeroPadding(number: number, count: number) {
+  // 配列を指定の桁数分の長さで初期化する
+  let zeroArray = new Array(count);
+  // 配列の要素を '0' を挟んで連結する（つまり「桁数 - 1」の 0 が連なる）
+  let zeroString = zeroArray.join("0") + number;
+  // 文字列の後ろから桁数分だけ文字を抜き取る
+  return zeroString.slice(-count);
+}
 
 export function* initialize() {
   const { payload } = yield take(actions.initialize);
@@ -461,7 +451,13 @@ export function* initialize() {
   ctx = util.context;
 
   init();
-  loadCheck();
+  loading();
+  // イベントを設定する
+  eventSetting();
+  // シーンを定義する
+  sceneSetting();
+  // 描画処理を開始する
+  render();
 }
 
 function* rootSaga() {

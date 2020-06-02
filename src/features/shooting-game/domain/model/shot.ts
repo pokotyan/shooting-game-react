@@ -1,12 +1,17 @@
 import { Character } from "./character";
 import { Explosion } from "./explosion";
 import { Viper } from "./viper";
+import { Event } from "../event";
+import { judgeCollision } from "../service/position";
+import { isOverflow } from "../service/shot";
 
 export class Shot extends Character {
   speed: number;
   power: number;
   targetArray: Character[];
   explosionArray: Explosion[];
+  event: Event;
+
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -43,6 +48,10 @@ export class Shot extends Character {
      */
     this.targetArray = [];
     this.explosionArray = [];
+
+    const event = new Event();
+    event.addOnDestroyEvent();
+    this.event = event;
   }
 
   /**
@@ -107,21 +116,13 @@ export class Shot extends Character {
     }
   }
 
-  /**
-   * キャラクターの状態を更新し描画を行う
-   */
   update() {
     // もしショットのライフが 0 以下の場合はなにもしない
     if (this.life <= 0) {
       return;
     }
     // もしショットが画面外へ移動していたらライフを 0（非生存の状態）に設定する
-    if (
-      this.position.x + this.width < 0 ||
-      this.position.x - this.width > this.ctx.canvas.width ||
-      this.position.y + this.height < 0 ||
-      this.position.y - this.height > this.ctx.canvas.height
-    ) {
+    if (isOverflow(this, this.ctx)) {
       this.life = 0;
     }
     // ショットを進行方向に沿って移動させる
@@ -130,45 +131,16 @@ export class Shot extends Character {
 
     // ショットと対象との衝突判定を行う
     this.targetArray.forEach((v) => {
-      // 自身か対象のライフが 0 以下の対象は無視する
-      if (this.life <= 0 || v.life <= 0) {
-        return null;
-      }
-      // 自身の位置と対象との距離を測る
-      let dist = this.position.distance(v.position);
-      // 自身と対象の幅の 1/4 の距離まで近づいている場合衝突とみなす
-      // TODO 衝突のコードを切り出してEnemyのupdateでも実行する。自機との衝突
-      if (dist <= (this.width + v.width) / 4) {
-        // 自機キャラクターが対象の場合、isComing 中は無敵
-        if (v instanceof Viper && v.isComing) {
-          return;
-        }
-        // 対象のライフを攻撃力分減算する
-        v.life -= this.power;
-        // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
-        if (v.life <= 0) {
-          for (let i = 0; i < this.explosionArray.length; ++i) {
-            // 発生していない爆発エフェクトがあれば対象の位置に生成する
-            if (!this.explosionArray[i].life) {
-              this.explosionArray[i].set(v.position.x, v.position.y);
-              break;
-            }
-          }
-          // TODO 撃破eventを発行してsubscribeした側でスコアを加算する
-          // もし対象が敵キャラクターの場合はスコアを加算する
-          // if (v instanceof Enemy === true) {
-          //   // 敵キャラクターのタイプによってスコアが変化するようにする
-          //   let score = 100;
-          //   if (v.type === "large") {
-          //     score = 1000;
-          //   }
-          //   // スコアシステムにもよるが仮でここでは最大スコアを制限
-          //   gameScore = Math.min(gameScore + score, 99999);
-          // }
-        }
-        // 自身のライフを 0 にする
-        this.life = 0;
-      }
+      judgeCollision({
+        shot: this,
+        target: v,
+        cb: () => {
+          // 対象のライフを攻撃力分減算する
+          v.life -= this.power;
+          // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+          this.event.emitter.emit("destroy", { shot: this, target: v });
+        },
+      });
     });
 
     // 座標系の回転を考慮した描画を行う

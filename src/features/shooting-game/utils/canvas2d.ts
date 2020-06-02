@@ -256,7 +256,7 @@ export class Canvas2DUtility {
    * @param {string} [color] - テキストを描画する際の色
    * @param {number} [width] - テキストを描画する幅に上限を設定する際の上限値
    */
-  drawText(text: string, x: number, y: number, color: string, width: number) {
+  drawText(text: string, x: number, y: number, color: string, width?: number) {
     // 色が指定されている場合はスタイルを設定する
     if (color != null) {
       this.context2d.fillStyle = color;

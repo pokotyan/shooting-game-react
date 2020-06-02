@@ -2,8 +2,8 @@
  * シーンを管理するためのクラス
  */
 export class SceneManager {
-  scene: { [k: string]: () => {} };
-  activeScene: (activeTime: number) => {};
+  scene: { [k: string]: (time: number) => void };
+  activeScene: (activeTime: number) => void;
   startTime: number;
   frame: number;
   /**
@@ -37,7 +37,7 @@ export class SceneManager {
    * @param {string} name - シーンの名前
    * @param {function} updateFunction - シーン中の処理
    */
-  add(name: string, updateFunction: () => {}) {
+  add(name: string, updateFunction: (time: number) => void) {
     this.scene[name] = updateFunction;
   }
 

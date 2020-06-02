@@ -1,9 +1,13 @@
 import { Position } from "./position";
 import { Shot } from "./shot";
 import { Viper } from "./viper";
+import { Event } from "../event";
+import { judgeCollision } from "../service/position";
+import { isOverflow } from "../service/shot";
 
 export class Homing extends Shot {
   frame: number;
+  event: Event;
   /**
    * @constructor
    * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
@@ -26,6 +30,10 @@ export class Homing extends Shot {
 
     // 永遠に曲がり続けないようにするためにフレーム数を持たせる
     this.frame = 0;
+
+    const event = new Event();
+    event.addOnDestroyEvent();
+    this.event = event;
   }
 
   /**
@@ -57,12 +65,7 @@ export class Homing extends Shot {
       return;
     }
     // もしショットが画面外へ移動していたらライフを 0（非生存の状態）に設定する
-    if (
-      this.position.x + this.width < 0 ||
-      this.position.x - this.width > this.ctx.canvas.width ||
-      this.position.y + this.height < 0 ||
-      this.position.y - this.height > this.ctx.canvas.height
-    ) {
+    if (isOverflow(this, this.ctx)) {
       this.life = 0;
     }
     // ショットをホーミングさせながら移動させる
@@ -105,35 +108,16 @@ export class Homing extends Shot {
     // ショットと対象との衝突判定を行う
     // ※以下は Shot クラスの衝突判定とまったく同じロジック
     this.targetArray.forEach((v) => {
-      if (this.life <= 0 || v.life <= 0) {
-        return;
-      }
-      let dist = this.position.distance(v.position);
-      if (dist <= (this.width + v.width) / 4) {
-        if (v instanceof Viper) {
-          if (v.isComing === true) {
-            return;
-          }
-        }
-        v.life -= this.power;
-        if (v.life <= 0) {
-          for (let i = 0; i < this.explosionArray.length; ++i) {
-            if (this.explosionArray[i].life !== true) {
-              this.explosionArray[i].set(v.position.x, v.position.y);
-              break;
-            }
-          }
-          // TODO 撃破イベントを定義し、そこでポイント加算
-          // if(v instanceof Enemy === true){
-          //     let score = 100;
-          //     if(v.type === 'large'){
-          //         score = 1000;
-          //     }
-          //     gameScore = Math.min(gameScore + score, 99999);
-          // }
-        }
-        this.life = 0;
-      }
+      judgeCollision({
+        shot: this,
+        target: v,
+        cb: () => {
+          // 対象のライフを攻撃力分減算する
+          v.life -= this.power;
+          // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+          this.event.emitter.emit("destroy", { shot: this, target: v });
+        },
+      });
     });
     // 座標系の回転を考慮した描画を行う
     this.rotationDraw();
