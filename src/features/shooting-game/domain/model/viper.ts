@@ -2,6 +2,7 @@ import { Position } from "./position";
 import { Character } from "./character";
 import { Shot } from "./shot";
 import { cantGoOffScreen } from "../service/position";
+import { action } from "../service/viper";
 
 export class Viper extends Character {
   speed: number;
@@ -143,77 +144,12 @@ export class Viper extends Character {
         this.ctx.globalAlpha = 0.5;
       }
     } else {
-      // キーの押下状態を調べて挙動を変える
-      if (isKeyDown.key_ArrowLeft) {
-        this.position.x -= this.speed; // アローキーの左
-      }
-      if (isKeyDown.key_ArrowRight) {
-        this.position.x += this.speed; // アローキーの右
-      }
-      if (isKeyDown.key_ArrowUp) {
-        this.position.y -= this.speed; // アローキーの上
-      }
-      if (isKeyDown.key_ArrowDown) {
-        this.position.y += this.speed; // アローキーの下
-      }
+      // キーの押下状態に従って行動する
+      action(this, isKeyDown);
       // 移動後の位置が画面外へ出ていないか確認して修正する
       cantGoOffScreen(this, this.ctx);
 
-      // キーの押下状態を調べてショットを生成する
-      if (isKeyDown.key_z) {
-        // ショットを撃てる状態なのかを確認する
-        // ショットチェック用カウンタが 0 以上ならショットを生成できる
-        if (this.shotCheckCounter >= 0) {
-          // ショットの生存を確認し非生存のものがあれば生成する
-          for (let i = 0; i < this.shotArray.length; ++i) {
-            // 非生存かどうかを確認する
-            if (this.shotArray[i].life <= 0) {
-              // 自機キャラクターの座標にショットを生成する
-              this.shotArray[i].set(this.position.x, this.position.y, 0, 0);
-              // 中央のショットは攻撃力を 2 にする
-              this.shotArray[i].setPower(2);
-              // ショットを生成したのでインターバルを設定する
-              this.shotCheckCounter = -this.shotInterval;
-              // ひとつ生成したらループを抜ける
-              break;
-            }
-          }
-          // シングルショットの生存を確認し非生存のものがあれば生成する
-          // このとき、2 個をワンセットで生成し左右に進行方向を振り分ける
-          for (let i = 0; i < this.singleShotArray.length; i += 2) {
-            // 非生存かどうかを確認する
-            if (
-              this.singleShotArray[i].life <= 0 &&
-              this.singleShotArray[i + 1].life <= 0
-            ) {
-              // 真上の方向（270 度）から左右に 10 度傾いたラジアン
-              let radCW = (280 * Math.PI) / 180; // 時計回りに 10 度分
-              let radCCW = (260 * Math.PI) / 180; // 反時計回りに 10 度分
-              // 自機キャラクターの座標にショットを生成する
-              this.singleShotArray[i].set(
-                this.position.x,
-                this.position.y,
-                0,
-                0
-              );
-              this.singleShotArray[i].setVectorFromAngle(radCW); // やや右に向かう
-              this.singleShotArray[i + 1].set(
-                this.position.x,
-                this.position.y,
-                0,
-                0
-              );
-              this.singleShotArray[i + 1].setVectorFromAngle(radCCW); // やや左に向かう
-              // ショットを生成したのでインターバルを設定する
-              this.shotCheckCounter = -this.shotInterval;
-              // 一組生成したらループを抜ける
-              break;
-            }
-          }
-        }
-      }
       // ショットチェック用のカウンタをインクリメントする
-
       ++this.shotCheckCounter;
     }
 

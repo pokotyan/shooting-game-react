@@ -100,7 +100,6 @@ const init = () => {
 
   // 敵キャラクターのショットを初期化する
   for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
-    // TODO ここで、Shotの挙動classをinjectする
     enemyShotArray[i] = new Shot(
       ctx,
       0,
@@ -116,7 +115,6 @@ const init = () => {
 
   // ボスキャラクターのホーミングショットを初期化する
   for (let i = 0; i < HOMING_MAX_COUNT; ++i) {
-    // TODO ここで、Shotの挙動classをinjectする
     homingArray[i] = new Shot(
       ctx,
       0,
@@ -209,11 +207,11 @@ const loading = () => {
   }
 };
 
-const eventSetting = () => {
+const keyHandlerSetting = () => {
   window.addEventListener(
     "keydown",
     (event) => {
-      isKeyDown[`key_${event.key}`] = true;
+      isKeyDown[`${event.key}`] = true;
       // リトライ
       if (event.key === "Enter" && viper.life <= 0) {
         restart = true;
@@ -224,7 +222,7 @@ const eventSetting = () => {
   window.addEventListener(
     "keyup",
     (event) => {
-      isKeyDown[`key_${event.key}`] = false;
+      isKeyDown[`${event.key}`] = false;
     },
     false
   );
@@ -483,11 +481,8 @@ export function* initialize() {
 
   init();
   loading();
-  // イベントを設定する
-  eventSetting();
-  // シーンを定義する
+  keyHandlerSetting();
   sceneSetting();
-  // 描画処理を開始する
   render();
 }
 
