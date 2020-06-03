@@ -6,6 +6,14 @@ import { Shot } from "./domain/model/shot";
 import { Viper } from "./domain/model/viper";
 import { Enemy } from "./domain/model/enemy";
 import { Boss } from "./domain/model/boss";
+import {
+  Default,
+  Wave,
+  Large,
+  InvadeAction,
+  EscapeAction,
+  FloatingAction,
+} from "./domain/model/action";
 import { Explosion } from "./domain/model/explosion";
 import { BackgroundStar } from "./domain/model/background-star";
 import { Homing } from "./domain/model/homing";
@@ -166,30 +174,22 @@ const init = () => {
   }
 };
 
-function loading() {
-  let ready = true;
+const loading = () => {
+  let ready = false;
 
   ready = ready && viper.ready;
-  enemyArray.forEach((v: any) => {
-    ready = ready && v.ready;
-  });
-  shotArray.forEach((v: any) => {
-    ready = ready && v.ready;
-  });
-  singleShotArray.forEach((v: any) => {
-    ready = ready && v.ready;
-  });
-  enemyShotArray.forEach((v: any) => {
-    ready = ready && v.ready;
-  });
+  ready = enemyArray.every((v: Enemy) => ready && v.ready);
+  ready = shotArray.every((v: Shot) => ready && v.ready);
+  ready = singleShotArray.every((v: Shot) => ready && v.ready);
+  ready = enemyShotArray.every((v: Shot) => ready && v.ready);
 
   if (!ready) {
     // 準備が完了していない場合は 0.1 秒ごとに再帰呼出しする
     setTimeout(loading, 100);
   }
-}
+};
 
-function eventSetting() {
+const eventSetting = () => {
   window.addEventListener(
     "keydown",
     (event) => {
@@ -212,9 +212,9 @@ function eventSetting() {
     },
     false
   );
-}
+};
 
-function sceneSetting() {
+const sceneSetting = () => {
   scene.add("intro", (time: number) => {
     // 3 秒経過したらシーンを invade に変更する
     if (time > 3.0) {
@@ -233,12 +233,12 @@ function sceneSetting() {
           // frame を 60 で割り切れるかどうかで分岐する
           if (scene.frame % 60 === 0) {
             // 左側面から出てくる
-            e.set(-e.width, 30, 2, "default");
+            e.set(-e.width, 30, 2, new Default());
             // 進行方向は 30 度の方向
             e.setVectorFromAngle(degreesToRadians(30));
           } else {
             // 右側面から出てくる
-            e.set(CANVAS_WIDTH + e.width, 30, 2, "default");
+            e.set(CANVAS_WIDTH + e.width, 30, 2, new Default());
             // 進行方向は 150 度の方向
             e.setVectorFromAngle(degreesToRadians(150));
           }
@@ -278,10 +278,10 @@ function sceneSetting() {
           // frame が 200 以下かどうかで分ける
           if (scene.frame <= 200) {
             // 左側を進む
-            e.set(CANVAS_WIDTH * 0.2, -e.height, 2, "wave");
+            e.set(CANVAS_WIDTH * 0.2, -e.height, 2, new Wave());
           } else {
             // 右側を進む
-            e.set(CANVAS_WIDTH * 0.8, -e.height, 2, "wave");
+            e.set(CANVAS_WIDTH * 0.8, -e.height, 2, new Wave());
           }
           break;
         }
@@ -306,7 +306,7 @@ function sceneSetting() {
         if (enemyArray[j].life <= 0) {
           let e = enemyArray[j];
           // 画面中央あたりから出現しライフが多い
-          e.set(CANVAS_WIDTH / 2, -e.height, 50, "large");
+          e.set(CANVAS_WIDTH / 2, -e.height, 50, new Large());
           break;
         }
       }
@@ -320,20 +320,26 @@ function sceneSetting() {
       scene.use("gameover");
     }
   });
-  // invade シーン（ボスキャラクターを生成）
+  // boss戦
   scene.add("invade_boss", (time: number) => {
     // シーンのフレーム数が 0 となる最初のフレームでボスを登場させる
     if (scene.frame === 0) {
       // 画面中央上から登場するように位置を指定し、ライフは 250 に設定
       boss.set(CANVAS_WIDTH / 2, -boss.height, 250);
       // ボスキャラクター自身のモードは invade から始まるようにする
-      boss.setMode("invade");
+      boss.setAction(new InvadeAction());
     }
+
+    if (boss.position.y > 100) {
+      boss.position.y = 100;
+      boss.setAction(new FloatingAction());
+    }
+
     // 自機キャラクターが被弾してライフが 0 になっていたらゲームオーバー
     // ゲームオーバー画面が表示されているうちにボス自身は退避させる
     if (viper.life <= 0) {
       scene.use("gameover");
-      boss.setMode("escape");
+      boss.setAction(new EscapeAction());
     }
     // ボスが破壊されたらシーンを intro に設定する
     if (boss.life <= 0) {
@@ -371,9 +377,9 @@ function sceneSetting() {
   });
   // 一番最初のシーンには intro を設定する
   scene.use("intro");
-}
+};
 
-function render() {
+const render = () => {
   // グローバルなアルファを必ず 1.0 で描画処理を開始する
   ctx.globalAlpha = 1.0;
   // 描画前に画面全体を暗いネイビーで塗りつぶす
@@ -421,7 +427,7 @@ function render() {
   });
 
   requestAnimationFrame(render);
-}
+};
 
 /**
  * 度数法の角度からラジアンを生成する

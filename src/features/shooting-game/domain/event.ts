@@ -16,7 +16,7 @@ export class Event {
   public addOnDestroyEvent() {
     this.emitter.on(
       "destroy",
-      ({ self, target }: { self: Shot | Enemy | Boss; target: Character }) => {
+      ({ self, target }: { self: Shot | Enemy; target: Character }) => {
         if (target.life <= 0) {
           for (let i = 0; i < self.explosionArray.length; ++i) {
             // 発生していない爆発エフェクトがあれば対象の位置に生成する
@@ -28,11 +28,16 @@ export class Event {
 
           // もし対象が敵キャラクターの場合はスコアを加算する
           if (target instanceof Enemy) {
-            // 敵キャラクターのタイプによってスコアが変化するようにする
+            // 敵キャラクターの行動タイプによってスコアが変化するようにする
             let score = 100;
-            if (target.type === "large") {
+            if (target.action.constructor.name === "Large") {
               score = 1000;
             }
+
+            if (target instanceof Boss) {
+              score = 10000;
+            }
+
             // スコアシステムにもよるが仮でここでは最大スコアを制限
             store.dispatch(actions.addPoint(Math.min(score, 99999)));
           }

@@ -1,17 +1,17 @@
-import { Position } from "./position";
 import { Character } from "./character";
 import { Shot } from "./shot";
 import { Event } from "../event";
 import { judgeCollision } from "../service/position";
 import { Explosion } from "./explosion";
+import { Action } from "./action";
 
 export class Enemy extends Character {
-  type: string;
   frame: number;
   speed: number;
   shotArray: Shot[];
   attackTarget: Character;
   explosionArray: Explosion[];
+  action: Action;
   event: Event;
   /**
    * @constructor
@@ -33,11 +33,6 @@ export class Enemy extends Character {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
 
-    /**
-     * 自身のタイプ
-     * @type {string}
-     */
-    this.type = "default";
     /**
      * 自身が出現してからのフレーム数
      * @type {number}
@@ -61,6 +56,8 @@ export class Enemy extends Character {
 
     this.explosionArray = [];
 
+    this.action = null as any;
+
     const event = new Event();
     event.addOnDestroyEvent();
     this.event = event;
@@ -73,13 +70,14 @@ export class Enemy extends Character {
    * @param {number} [life=1] - 設定するライフ
    * @param {string} [type='default'] - 設定するタイプ
    */
-  set(x: number, y: number, life: number = 1, type: string = "default") {
+  set(x: number, y: number, life: number = 1, action: Action) {
     // 登場開始位置に敵キャラクターを移動させる
     this.position.set(x, y);
     // 敵キャラクターのライフを 0 より大きい値（生存の状態）に設定する
     this.life = life;
     // 敵キャラクターのタイプを設定する
-    this.type = type;
+    // this.type = type;
+    this.action = action;
     // 敵キャラクターのフレームをリセットする
     this.frame = 0;
   }
@@ -111,7 +109,6 @@ export class Enemy extends Character {
 
   /**
    * キャラクターの状態を更新し描画を行う
-   * TODO Shotのupdateにある衝突のコード、ここにもかく。現在敵とぶつかってもダメージ受けない。
    */
   update() {
     // もし敵キャラクターのライフが 0 以下の場合はなにもしない
@@ -119,25 +116,7 @@ export class Enemy extends Character {
       return;
     }
 
-    // タイプに応じて挙動を変える
-    // タイプに応じてライフを 0 にする条件も変える
-    switch (this.type) {
-      // wave タイプはサイン波で左右に揺れるように動く
-      // ショットの向きは自機キャラクターの方向に放つ
-      case "wave":
-        WaveEnemy.action(this);
-        break;
-      // large タイプはサイン波で左右に揺れるようにゆっくりと動く
-      // ショットの向きは放射状にばらまく
-      case "large":
-        LargeEnemy.action(this);
-        break;
-      // default タイプは設定されている進行方向にまっすぐ進むだけの挙動
-      case "default":
-      default:
-        DefaultEnemy.action(this);
-        break;
-    }
+    this.action.action(this);
 
     // Viperとの衝突判定
     judgeCollision({
@@ -179,68 +158,6 @@ export class Enemy extends Character {
         // ひとつ生成したらループを抜ける
         break;
       }
-    }
-  }
-}
-
-class WaveEnemy {
-  static action(enemy: Enemy) {
-    // 配置後のフレームが 60 で割り切れるときにショットを放つ
-    if (enemy.frame % 60 === 0) {
-      // 攻撃対象となる自機キャラクターに向かうベクトル
-      let tx = enemy.attackTarget.position.x - enemy.position.x;
-      let ty = enemy.attackTarget.position.y - enemy.position.y;
-      // ベクトルを単位化する
-      let tv = Position.calcNormal(tx, ty);
-      // 自機キャラクターにややゆっくりめのショットを放つ
-      enemy.fire(tv.x, tv.y, 4.0);
-    }
-    // X 座標はサイン波で、Y 座標は一定量で変化する
-    enemy.position.x += Math.sin(enemy.frame / 10);
-    enemy.position.y += 2.0;
-    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
-      enemy.life = 0;
-    }
-  }
-}
-
-class LargeEnemy {
-  static action(enemy: Enemy) {
-    // 配置後のフレームが 50 で割り切れるときにショットを放つ
-    if (enemy.frame % 50 === 0) {
-      // 45 度ごとにオフセットした全方位弾を放つ
-      for (let i = 0; i < 360; i += 45) {
-        let r = (i * Math.PI) / 180;
-        // ラジアンからサインとコサインを求める
-        let s = Math.sin(r);
-        let c = Math.cos(r);
-        // 求めたサイン・コサインでショットを放つ
-        enemy.fire(c, s, 3.0);
-      }
-    }
-    // X 座標はサイン波で、Y 座標は一定量で変化する
-    enemy.position.x += Math.sin((enemy.frame + 90) / 50) * 2.0;
-    enemy.position.y += 1.0;
-    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
-      enemy.life = 0;
-    }
-  }
-}
-
-class DefaultEnemy {
-  static action(enemy: Enemy) {
-    // 配置後のフレームが 100 のときにショットを放つ
-    if (enemy.frame === 100) {
-      enemy.fire();
-    }
-    // 敵キャラクターを進行方向に沿って移動させる
-    enemy.position.x += enemy.vector.x * enemy.speed;
-    enemy.position.y += enemy.vector.y * enemy.speed;
-    // 画面外（画面下端）へ移動していたらライフを 0（非生存の状態）に設定する
-    if (enemy.position.y - enemy.height > enemy.ctx.canvas.height) {
-      enemy.life = 0;
     }
   }
 }
