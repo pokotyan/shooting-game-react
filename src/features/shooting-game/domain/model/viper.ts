@@ -148,9 +148,6 @@ export class Viper extends Character {
       action(this, isKeyDown);
       // 移動後の位置が画面外へ出ていないか確認して修正する
       cantGoOffScreen(this, this.ctx);
-
-      // ショットチェック用のカウンタをインクリメントする
-      ++this.shotCheckCounter;
     }
 
     // 自機キャラクターを描画する

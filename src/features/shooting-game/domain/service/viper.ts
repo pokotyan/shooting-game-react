@@ -70,4 +70,6 @@ const attack = (viper: Viper) => {
       }
     }
   }
+  // ショットチェック用のカウンタをインクリメントする
+  ++viper.shotCheckCounter;
 };
