@@ -119,19 +119,20 @@ export class Enemy extends Character {
     this.action.action(this);
 
     // Viperとの衝突判定
-    judgeCollision({
+    const isCollision = judgeCollision({
       self: this,
       target: this.attackTarget,
-      cb: () => {
-        // Viperのライフを2減らす。
-        this.attackTarget.life -= 2;
-        // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
-        this.event.emitter.emit("destroy", {
-          self: this,
-          target: this.attackTarget,
-        });
-      },
     });
+
+    if (isCollision) {
+      // Viperのライフを2減らす。
+      this.attackTarget.life -= 2;
+      // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+      this.event.emitter.emit("destroy", {
+        self: this,
+        target: this.attackTarget,
+      });
+    }
 
     // 描画を行う（いまのところ特に回転は必要としていないのでそのまま描画）
     this.draw();

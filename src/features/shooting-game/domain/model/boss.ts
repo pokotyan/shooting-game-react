@@ -1,6 +1,5 @@
 import { Character } from "./character";
 import { Shot } from "./shot";
-import { Homing } from "./homing";
 import { Explosion } from "./explosion";
 import { Event } from "../event";
 import { Action } from "./action";
@@ -11,7 +10,7 @@ export class Boss extends Enemy {
   frame: number;
   speed: number;
   shotArray: Shot[];
-  homingArray: Homing[];
+  homingArray: Shot[];
   attackTarget: Character;
   explosionArray: Explosion[];
   event: Event;
@@ -88,7 +87,7 @@ export class Boss extends Enemy {
    * ホーミングショットを設定する
    * @param {Array<Homing>} homingArray - 自身に設定するホーミングショットの配列
    */
-  setHomingArray(homingArray: Array<Homing>) {
+  setHomingArray(homingArray: Array<Shot>) {
     // 自身のプロパティに設定する
     this.homingArray = homingArray;
   }

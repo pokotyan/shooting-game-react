@@ -3,13 +3,16 @@ import { Explosion } from "./explosion";
 import { Event } from "../event";
 import { judgeCollision } from "../service/position";
 import { isOverflow } from "../service/shot";
+import { ShotVector } from "./shot-vector";
 
 export class Shot extends Character {
+  frame: number;
   speed: number;
   power: number;
   targetArray: Character[];
   explosionArray: Explosion[];
   event: Event;
+  shotVector: ShotVector;
 
   /**
    * @constructor
@@ -26,7 +29,8 @@ export class Shot extends Character {
     y: number,
     w: number,
     h: number,
-    imagePath: string
+    imagePath: string,
+    shotVector: ShotVector
   ) {
     // 継承元の初期化
     super(ctx, x, y, w, h, 0, imagePath);
@@ -47,6 +51,10 @@ export class Shot extends Character {
      */
     this.targetArray = [];
     this.explosionArray = [];
+
+    this.frame = 0;
+
+    this.shotVector = shotVector;
 
     const event = new Event();
     event.addOnDestroyEvent();
@@ -69,6 +77,8 @@ export class Shot extends Character {
     this.setSpeed(speed);
     // 攻撃力を設定する
     this.setPower(power);
+    // フレームをリセットする
+    this.frame = 0;
   }
 
   /**
@@ -124,25 +134,27 @@ export class Shot extends Character {
     if (isOverflow(this, this.ctx)) {
       this.life = 0;
     }
-    // ショットを進行方向に沿って移動させる
-    this.position.x += this.vector.x * this.speed;
-    this.position.y += this.vector.y * this.speed;
+    // ショットをinjectしたshotVectorに従って移動させる
+    this.shotVector.calc(this);
 
     // ショットと対象との衝突判定を行う
     this.targetArray.forEach((v) => {
-      judgeCollision({
+      const isCollision = judgeCollision({
         self: this,
         target: v,
-        cb: () => {
-          // 対象のライフを攻撃力分減算する
-          v.life -= this.power;
-          // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
-          this.event.emitter.emit("destroy", { self: this, target: v });
-        },
       });
+
+      if (isCollision) {
+        // 対象のライフを攻撃力分減算する
+        v.life -= this.power;
+        // もし対象のライフが 0 以下になっていたら爆発エフェクトを発生させる
+        this.event.emitter.emit("destroy", { self: this, target: v });
+      }
     });
 
     // 座標系の回転を考慮した描画を行う
     this.rotationDraw();
+    // 自身のフレームをインクリメントする
+    ++this.frame;
   }
 }

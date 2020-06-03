@@ -1,6 +1,7 @@
 import { Position } from "./position";
 import { Character } from "./character";
 import { Shot } from "./shot";
+import { cantGoOffScreen } from "../service/position";
 
 export class Viper extends Character {
   speed: number;
@@ -156,20 +157,15 @@ export class Viper extends Character {
         this.position.y += this.speed; // アローキーの下
       }
       // 移動後の位置が画面外へ出ていないか確認して修正する
-      let canvasWidth = this.ctx.canvas.width;
-      let canvasHeight = this.ctx.canvas.height;
-      let tx = Math.min(Math.max(this.position.x, 0), canvasWidth);
-      let ty = Math.min(Math.max(this.position.y, 0), canvasHeight);
-      this.position.set(tx, ty);
+      cantGoOffScreen(this, this.ctx);
 
       // キーの押下状態を調べてショットを生成する
       if (isKeyDown.key_z) {
         // ショットを撃てる状態なのかを確認する
         // ショットチェック用カウンタが 0 以上ならショットを生成できる
         if (this.shotCheckCounter >= 0) {
-          let i;
           // ショットの生存を確認し非生存のものがあれば生成する
-          for (i = 0; i < this.shotArray.length; ++i) {
+          for (let i = 0; i < this.shotArray.length; ++i) {
             // 非生存かどうかを確認する
             if (this.shotArray[i].life <= 0) {
               // 自機キャラクターの座標にショットを生成する
@@ -184,7 +180,7 @@ export class Viper extends Character {
           }
           // シングルショットの生存を確認し非生存のものがあれば生成する
           // このとき、2 個をワンセットで生成し左右に進行方向を振り分ける
-          for (i = 0; i < this.singleShotArray.length; i += 2) {
+          for (let i = 0; i < this.singleShotArray.length; i += 2) {
             // 非生存かどうかを確認する
             if (
               this.singleShotArray[i].life <= 0 &&

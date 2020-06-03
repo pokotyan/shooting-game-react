@@ -16,8 +16,8 @@ import {
 } from "./domain/model/action";
 import { Explosion } from "./domain/model/explosion";
 import { BackgroundStar } from "./domain/model/background-star";
-import { Homing } from "./domain/model/homing";
 import store, { RootState } from "../../app/store";
+import { Simple, Homing } from "./domain/model/shot-vector";
 
 const CANVAS_WIDTH = 640;
 const CANVAS_HEIGHT = 480;
@@ -42,7 +42,7 @@ let shotArray: Shot[] = [];
 let singleShotArray: Shot[] = [];
 let enemyShotArray: Shot[] = [];
 let boss: Boss = null as any;
-let homingArray: Homing[] = [];
+let homingArray: Shot[] = [];
 let explosionArray: Explosion[] = [];
 let backgroundStarArray: BackgroundStar[] = [];
 let restart = false;
@@ -65,14 +65,15 @@ const init = () => {
 
   // 自機のショットを初期化する
   for (let i = 0; i < SHOT_MAX_COUNT; i++) {
-    shotArray[i] = new Shot(ctx, 0, 0, 32, 32, "viper_shot.png");
+    shotArray[i] = new Shot(ctx, 0, 0, 32, 32, "viper_shot.png", new Simple());
     singleShotArray[i * 2] = new Shot(
       ctx,
       0,
       0,
       32,
       32,
-      "viper_single_shot.png"
+      "viper_single_shot.png",
+      new Simple()
     );
     singleShotArray[i * 2 + 1] = new Shot(
       ctx,
@@ -80,7 +81,8 @@ const init = () => {
       0,
       32,
       32,
-      "viper_single_shot.png"
+      "viper_single_shot.png",
+      new Simple()
     );
   }
 
@@ -98,14 +100,32 @@ const init = () => {
 
   // 敵キャラクターのショットを初期化する
   for (let i = 0; i < ENEMY_SHOT_MAX_COUNT; ++i) {
-    enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, "enemy_shot.png");
+    // TODO ここで、Shotの挙動classをinjectする
+    enemyShotArray[i] = new Shot(
+      ctx,
+      0,
+      0,
+      32,
+      32,
+      "enemy_shot.png",
+      new Simple()
+    );
     enemyShotArray[i].setTargets([viper]);
     enemyShotArray[i].setExplosions(explosionArray); // 思ったけどショットが爆発のarray持ってるの変。viper or enemy or bossが持ってるべきでは？
   }
 
   // ボスキャラクターのホーミングショットを初期化する
   for (let i = 0; i < HOMING_MAX_COUNT; ++i) {
-    homingArray[i] = new Homing(ctx, 0, 0, 32, 32, "homing_shot.png");
+    // TODO ここで、Shotの挙動classをinjectする
+    homingArray[i] = new Shot(
+      ctx,
+      0,
+      0,
+      32,
+      32,
+      "homing_shot.png",
+      new Homing()
+    );
     homingArray[i].setTargets([viper]); // 引数は配列なので注意
     homingArray[i].setExplosions(explosionArray);
   }
@@ -194,13 +214,9 @@ const eventSetting = () => {
     "keydown",
     (event) => {
       isKeyDown[`key_${event.key}`] = true;
-      // ゲームオーバーから再スタートするための設定（エンターキー）
-      if (event.key === "Enter") {
-        // 自機キャラクターのライフが 0 以下の状態
-        if (viper.life <= 0) {
-          // 再スタートフラグを立てる
-          restart = true;
-        }
+      // リトライ
+      if (event.key === "Enter" && viper.life <= 0) {
+        restart = true;
       }
     },
     false
@@ -379,7 +395,7 @@ const sceneSetting = () => {
   scene.use("intro");
 };
 
-const render = () => {
+const preRender = () => {
   // グローバルなアルファを必ず 1.0 で描画処理を開始する
   ctx.globalAlpha = 1.0;
   // 描画前に画面全体を暗いネイビーで塗りつぶす
@@ -391,10 +407,12 @@ const render = () => {
   }: RootState = store.getState();
   ctx.font = "bold 24px monospace";
   util.drawText(zeroPadding(point, 5), 30, 50, "#ffffff");
+};
 
+const updateActor = () => {
   scene.update();
 
-  backgroundStarArray.forEach((v: any) => {
+  backgroundStarArray.forEach((v: BackgroundStar) => {
     v.update();
   });
 
@@ -402,30 +420,34 @@ const render = () => {
 
   boss.update();
 
-  homingArray.forEach((v: any) => {
+  homingArray.forEach((v: Shot) => {
     v.update();
   });
 
-  enemyArray.forEach((v: any) => {
+  enemyArray.forEach((v: Enemy) => {
     v.update();
   });
 
-  shotArray.forEach((v: any) => {
+  shotArray.forEach((v: Shot) => {
     v.update();
   });
 
-  singleShotArray.forEach((v: any) => {
+  singleShotArray.forEach((v: Shot) => {
     v.update();
   });
 
-  enemyShotArray.forEach((v: any) => {
+  enemyShotArray.forEach((v: Shot) => {
     v.update();
   });
 
-  explosionArray.forEach((v: any) => {
+  explosionArray.forEach((v: Explosion) => {
     v.update();
   });
+};
 
+const render = () => {
+  preRender();
+  updateActor();
   requestAnimationFrame(render);
 };
 
