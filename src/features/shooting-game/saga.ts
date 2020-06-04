@@ -46,11 +46,11 @@ let homingArray: Shot[] = [];
 let explosionArray: Explosion[] = [];
 let backgroundStarArray: BackgroundStar[] = [];
 let restart = false;
+let isPause = false;
 let isKeyDown: {
   [k: string]: boolean;
 } = {};
 
-// TODO ポーズ機能を作る。space押下でポーズ
 const init = () => {
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
@@ -215,6 +215,15 @@ const keyHandlerSetting = () => {
       // リトライ
       if (event.key === "Enter" && viper.life <= 0) {
         restart = true;
+      }
+
+      // 一時停止
+      if (event.code === "Space") {
+        isPause = !isPause;
+
+        if (!isPause) {
+          requestId = requestAnimationFrame(render);
+        }
       }
     },
     false
@@ -443,10 +452,17 @@ const updateActor = () => {
   });
 };
 
+let requestId: number;
+
 const render = () => {
   preRender();
   updateActor();
-  requestAnimationFrame(render);
+
+  if (!isPause) {
+    requestId = requestAnimationFrame(render);
+  } else {
+    cancelAnimationFrame(requestId);
+  }
 };
 
 /**

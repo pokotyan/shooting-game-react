@@ -34,7 +34,9 @@ export function ShootingGame() {
       >
         十字キー: 移動
         <br />
-        Z: ショット
+        z: ショット
+        <br />
+        Space: 一時停止
         <br />
         Enter: リトライ
       </div>
